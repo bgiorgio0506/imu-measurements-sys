@@ -1,4 +1,13 @@
 /*
+ * I2CDevice.cpp - Implementation of the I2CDevice class for Arduino
+ *
+ * This class provides a simple interface for reading and writing registers
+ * on an I2C device. It supports both single and multiple register operations.
+ * Author: Giorgio Bella
+ * version 1.0
+ * License GNU General Public License Version 3 (GPL3)
+ * University of Pisa Italy, g.bella2@studenti.unipi.it, bgiorgio0506@gmail.com
+ *
 */
 
 #include "I2CDevice.h"
