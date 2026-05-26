@@ -122,7 +122,7 @@ two sensors.
      * In the IMU mode the relative orientation of the BNO055 in space is calculated from the
 accelerometer and gyroscope data. The calculation is fast (i.e. high output data rate).
      */
-    IMU = 0b1000,
+    IMU_MODE = 0b1000,
     /**
      * The COMPASS mode is intended to measure the magnetic earth field and calculate the
 geographic direction.

@@ -116,10 +116,10 @@ class IMU : public I2CDevice {
 
     class Interrupt {
         public: 
-        bool enableInterrupt(uint8_t interrupt_mask);
-        bool disableInterrupt(uint8_t interrupt_mask);
-        bool maskInterrupt(uint8_t interrupt_mask);
-        bool unmaskInterrupt(uint8_t interrupt_mask);
+        bool enable();
+        bool disable();
+        bool mask();
+        bool unmask();
         Interrupt(IMU *imu, int enable_bit, int mask_bit, EnabledAxes axes, void (*callback)(), int pin0){
             this->ENABLE_BIT = enable_bit;
             this->MASK_BIT = mask_bit;

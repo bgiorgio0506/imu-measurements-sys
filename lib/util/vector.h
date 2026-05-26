@@ -26,7 +26,7 @@ public:
     T getX() const { return this->vec[0]; }
     T getY() const { return this->vec[1]; }
     T getZ() const { return this->vec[2]; }
-    Vector<double> divideByScalar(T scalar) const {
+    Vector<double> divideByScalar(T scalar) {
         Vector<double> result;
         for (size_t i = 0; i < VEC_SIZE; i++)
         {
