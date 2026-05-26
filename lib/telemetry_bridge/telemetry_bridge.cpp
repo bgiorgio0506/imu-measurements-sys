@@ -1,4 +1,24 @@
 #include "telemetry_bridge.h"
+#pragma region utils
+static bool hasText(const char* value) {
+  return value != nullptr && value[0] != '\0';
+}
+
+static String topic(const char* suffix = nullptr, const TelemetryConfig& config = TelemetryConfig()) {
+  String t = String(config.baseTopic);
+  if (!t.endsWith("/")) t += "/";
+  t += config.deviceId;
+
+  if (hasText(suffix)) {
+    t += "/";
+    t += suffix;
+  }
+
+  return t;
+
+}
+
+
 
 TelemetryBridge::TelemetryBridge() : _mqtt(_wifiClient) {}
 
@@ -237,22 +257,3 @@ void TelemetryBridge::logPublishedMessage(const char* fullTopic, const char* pay
   
 }
 
-#pragma region utils
-static bool hasText(const char* value) {
-  return value != nullptr && value[0] != '\0';
-}
-
-static String topic(const char* suffix = nullptr, const TelemetryConfig& config = TelemetryConfig()) {
-  String t = String(config.baseTopic);{
-  String t = String(config.baseTopic);
-
-  if (!t.endsWith("/")) t += "/";
-  t += config.deviceId;
-
-  if (hasText(suffix)) {
-    t += "/";
-    t += suffix;
-  }
-
-  return t;
-}

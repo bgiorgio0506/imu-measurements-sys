@@ -28,24 +28,6 @@ enum MISSION_STATUS
 };
 
 MissionConfig missionConf;
-
-void setupBridge()
-{
-  SerialBT.begin("ESP32_IMU_DEBUG_LOG"); // Bluetooth device name
-  config.wifiSsid = "YOUR_WIFI_NAME";
-  config.wifiPassword = "YOUR_WIFI_PASSWORD";
-  config.mqttHost = "YOUR_MQTT_HOST";
-  config.mqttPort = 1883; // standard MQTT port
-  config.deviceId = "YOUR_DEVICE_ID";
-  config.baseTopic = "YOUR_BASE_TOPIC";
-  config.logWithTimestamp = true;
-  config.mirrorPublishedMessagesToLog = true;
-  config.mirrorReceivedCommandsToLog = true;
-
-  bridge.setLogStream(SerialBT, true);
-  bridge.setCommandCallback(onCommand);
-}
-
 void onCommand(const String &topic, const String &payload)
 {
   bridge.publishStatus("Received command: " + payload);
@@ -103,6 +85,24 @@ void onCommand(const String &topic, const String &payload)
     }
   }
 }
+
+void setupBridge()
+{
+  SerialBT.begin("ESP32_IMU_DEBUG_LOG"); // Bluetooth device name
+  config.wifiSsid = "YOUR_WIFI_NAME";
+  config.wifiPassword = "YOUR_WIFI_PASSWORD";
+  config.mqttHost = "YOUR_MQTT_HOST";
+  config.mqttPort = 1883; // standard MQTT port
+  config.deviceId = "YOUR_DEVICE_ID";
+  config.baseTopic = "YOUR_BASE_TOPIC";
+  config.logWithTimestamp = true;
+  config.mirrorPublishedMessagesToLog = true;
+  config.mirrorReceivedCommandsToLog = true;
+
+  bridge.setLogStream(SerialBT, true);
+  bridge.setCommandCallback(onCommand);
+}
+
 
 StaticJsonDocument<512> serializeDataToJson(bno055_burst_t &data, char *buffer, size_t bufferSize)
 {

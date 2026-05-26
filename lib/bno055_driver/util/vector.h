@@ -17,8 +17,8 @@
 template<typename T>
 class Vector{
 public:
-    Vector();
-    ~Vector();
+    Vector(): vec{0, 0, 0} {};
+    ~Vector() = default;
     T vec[VEC_SIZE];
     void setX(T x) { this->vec[0] = x; }
     void setY(T y) { this->vec[1] = y; }

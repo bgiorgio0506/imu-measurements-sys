@@ -17,8 +17,8 @@
 
 class Quaternion {
 public:
-    Quaternion();
-    ~Quaternion();
+    Quaternion(): orientation{0.0, 0.0, 0.0, 1.0} {};
+    ~Quaternion() = default;
     struct EulerAngles {
         double roll;
         double pitch;
