@@ -79,6 +79,7 @@ private:
     String topicTelemetry();
     String topicStatus();
     String topicEvent(const char *eventName);
+    String topicCommand();
     String mqttClientId();
     bool isWifiConnected();
     bool isMqttConnected();

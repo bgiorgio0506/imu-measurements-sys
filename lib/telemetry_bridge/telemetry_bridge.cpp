@@ -92,8 +92,8 @@ bool TelemetryBridge::publishEvent(const String& eventName, const String& jsonPa
 }
 
 bool TelemetryBridge::subscribeCommand() {
-  String commandTopic = topicEvent("command") + "/#";
-  return _mqtt.subscribe(commandTopic.c_str());
+  if (!isMqttConnected()) return false;
+  return _mqtt.subscribe(topicCommand().c_str(), 1);
 }
 
 bool TelemetryBridge::publish(const char* topicSuffix, const char* payload, bool retained) {
@@ -102,6 +102,7 @@ bool TelemetryBridge::publish(const char* topicSuffix, const char* payload, bool
 }
 
 bool TelemetryBridge::publishRaw(const char* fullTopic, const char* payload, bool retained) {
+  logPublishedMessage(fullTopic, payload, true);
   if (!isMqttConnected() || !hasText(fullTopic) || payload == nullptr) return false;
   return _mqtt.publish(fullTopic, payload, retained);
 }
@@ -132,6 +133,10 @@ int TelemetryBridge::getRssi() {
 
 String TelemetryBridge::topicTelemetry()  {
   return topic("telemetry", _config);
+}
+
+String TelemetryBridge::topicCommand()  {
+  return topic("command", _config);
 }
 
 String TelemetryBridge::topicStatus()  {
@@ -208,12 +213,22 @@ bool TelemetryBridge::connectMqttOnce() {
 
 void TelemetryBridge::onMqttMessage(char* topic, byte* payload, unsigned int length) {
   String topicStr(topic);
-  String payloadStr((char*)payload, length);
-  log("MQTT: message received on topic " + topicStr + ": " + payloadStr);
+  String payloadStr;
 
-  if (_commandCallback) {
-    _commandCallback(topicStr, payloadStr);
+  for (unsigned int i = 0; i < length; i++) {
+    payloadStr += (char)payload[i];
   }
+
+  payloadStr.trim();
+
+  log("MQTT RX topic=[" + topicStr + "] payload=[" + payloadStr + "]");
+
+  if (!_commandCallback) {
+    log("MQTT RX: no command callback registered");
+    return;
+  }
+
+  _commandCallback(topicStr, payloadStr);
 }
 
 String TelemetryBridge::mqttClientId() {
@@ -232,6 +247,9 @@ void TelemetryBridge::clearLogStream() {
 void TelemetryBridge::log( const String& message) {
   if (_logCallback) {
     _logCallback(message);
+  }
+  if(_mirrorPublishedMessagesToLog || _mirrorReceivedCommandsToLog) {
+    writeStreamLog("[LOG]"+message);
   }
 }
 
