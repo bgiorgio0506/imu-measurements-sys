@@ -198,6 +198,9 @@ bool IMU::setPageID(uint8_t page_id){
     return writeRegister(BNO055_PAGE_ID, page_id);
 }
 
+uint8_t IMU::getPageID(){
+   return readRegister(BNO055_PAGE_ID);
+}
 #pragma endregion CONFIGURATION_GETTERS_SETTERS
 
 #pragma region DATA_READING

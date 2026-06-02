@@ -22,14 +22,22 @@ I2CDevice::~I2CDevice() {
 }
 
 byte I2CDevice::readRegister(byte offset) {
-    _wire->beginTransmission(_i2c_address);
-    _wire->write(offset);
-    _wire->endTransmission(false); // Send a restart, not a stop
-    _wire->requestFrom(_i2c_address, (byte)1);
-    if (_wire->available()) {
-        return _wire->read();
+     _wire->beginTransmission(_i2c_address);
+
+    if (_wire->write(offset) != 1) {
+        return 0; // Failed to write the register address
     }
-    return 0; // Return 0 if no data is available
+
+    byte err = _wire->endTransmission(false); // repeated start
+    if (err != 0) {
+        return 0;
+    }
+
+    byte count = _wire->requestFrom(_i2c_address, (byte)1);
+    if (count != 1) {
+        return 0;
+    }
+    return _wire->read();
 }
 
 bool I2CDevice::writeRegister(byte offset, byte value) {
