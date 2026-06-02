@@ -77,6 +77,59 @@ STANDING_BY (0) → STARTED (2) → STOPPED (1) → STANDING_BY
 - **STARTED**: Test in progress, telemetry data being collected and transmitted
 - **STOPPED**: Test paused, sensor configuration accessible
 
+## Command Parser
+
+The `CommandParser` class handles parsing incoming remote commands with a safe, bounds-checked implementation.
+
+### Design Features
+- **Null Safety**: Validates both input and output pointers before processing
+- **Safe String Copying**: All string operations use `copy_span()` with bounds checking and automatic null-termination
+- **Memory-safe**: Uses `static_cast` for safe type conversions (e.g., `memchr` return value)
+- **Configurable Limits**: 
+  - Max arguments per command: 12
+  - Max key length: 32 bytes
+  - Max value length: 64 bytes
+  - Max command length: 32 bytes
+
+### Command Parsing Flow
+
+```mermaid
+graph TD
+    A["Input String"] --> B["Skip Leading Spaces"]
+    B --> C{"Input Empty?"}
+    C -->|Yes| D["EMPTY"]
+    C -->|No| E["Find First Token"]
+    
+    E --> F{"Contains ':'?"}
+    F -->|No| G["BAD_PREFIX"]
+    F -->|Yes| H["Extract Prefix"]
+    
+    H --> I{"Prefix == 'imu'?"}
+    I -->|No| J["BAD_PREFIX"]
+    I -->|Yes| K["Extract Command"]
+    
+    K --> L{"Command Fits Buffer?"}
+    L -->|No| M["ARG_TOO_LONG"]
+    L -->|Yes| N["Parse Arguments"]
+    
+    N --> O{"More Tokens?"}
+    O -->|No| P["PARSE_OK"]
+    O -->|Yes| Q{"Too Many Args?"}
+    Q -->|Yes| R["TOO_MANY_ARGS"]
+    Q -->|No| S["Parse Each Arg"]
+    S --> O
+```
+
+### Parse Status Codes
+- `CMD_PARSE_OK` (0) - Successfully parsed
+- `CMD_PARSE_NULL` - Input or output pointer is null
+- `CMD_PARSE_EMPTY` - Input string is empty
+- `CMD_PARSE_BAD_PREFIX` - Missing or incorrect `imu:` prefix
+- `CMD_PARSE_EMPTY_COMMAND` - No command after `imu:`
+- `CMD_PARSE_TOO_MANY_ARGS` - More than 12 arguments
+- `CMD_PARSE_ARG_TOO_LONG` - Command or argument exceeds buffer size
+- `CMD_PARSE_BAD_ARG` - Invalid argument format
+
 ## Remote Commands
 
 All commands use the prefix `imu:` followed by the command name.
@@ -125,8 +178,11 @@ graph TD
     
     F -->|STANDING_BY| G[Wait for Commands]
     G --> H{Command Received?}
-    H -->|starttest| I[STARTED]
-    H -->|Other| G
+    H -->|Raw Command String| PARSE["CommandParser<br/>validate & parse"]
+    PARSE --> VALID{Valid?}
+    VALID -->|Error| G
+    VALID -->|starttest| I[STARTED]
+    VALID -->|Other| G
     
     F -->|STARTED| J[Publish Telemetry<br/>every 10 ms]
     J --> K[Update Status<br/>every 10s]
@@ -135,7 +191,7 @@ graph TD
     L -->|Yes| M[STOPPED]
     
     F -->|STOPPED| N[Accept Commands]
-    N --> O{Command Type?}
+    N --> O{Parsed Command?}
     O -->|Sensor Config| P[Configure Sensor]
     P --> N
     O -->|starttest| I
@@ -147,6 +203,7 @@ graph TD
 
 ## Data Flow Diagram
 
+### Telemetry Data Path
 ```mermaid
 graph LR
     Sensor["BNO055 Sensor<br/>I2C"]
@@ -159,16 +216,29 @@ graph LR
     
     MQTT["MQTT Broker<br/>10.79.43.181"]
     
-    CMD["MQTT Command<br/>Topic"]
-    
-    Handler["Command Handler<br/>onCommand()"]
-    
     Sensor -->|I2C| Driver
     Driver -->|bno055_burst_t| Serialize
     Serialize -->|JSON String| Bridge
     Bridge -->|Publish| MQTT
-    CMD -->|Subscribe| Handler
-    Handler -->|Commands| Sensor
+```
+
+### Command Path
+```mermaid
+graph LR
+    MQTT["MQTT Broker<br/>imu/command"]
+    
+    SUB["Subscribe<br/>receive string"]
+    
+    PARSE["CommandParser<br/>parse & validate"]
+    
+    HANDLER["Command Handler<br/>onCommand"]
+    
+    SENSOR["BNO055 Sensor<br/>Execute command"]
+    
+    MQTT -->|Raw String| SUB
+    SUB -->|input| PARSE
+    PARSE -->|parsed_command_t| HANDLER
+    HANDLER -->|control| SENSOR
 ```
 
 ## Setup Instructions
