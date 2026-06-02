@@ -192,7 +192,7 @@ void onCommand(const String &topic, const String &payload)
     }
   }
 
-  if (mission_status == STOPPED)
+  if (mission_status == STOPPED || mission_status == STANDING_BY)
   {
     // CONF COMMANDS
     if (String(cmd.command) == "setpwmode")

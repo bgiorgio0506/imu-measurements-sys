@@ -147,6 +147,7 @@ All commands use the prefix `imu:` followed by the command name.
 - `imu:selftest` - Run built-in self-test
 - `imu:operationmode config` - Enter CONFIG mode (for calibration)
 - `imu:operationmode imu` - Return to IMU_MODE
+- `imu:calibrate` - Start automatic calibration routine. The firmware will poll calibration status and wait up to 60s; if calibration does not complete within that timeout the routine aborts, the previous operation mode is restored, and a `calibration_timeout` event is published.
 
 ## Telemetry Data Format
 
