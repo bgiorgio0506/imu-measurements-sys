@@ -38,7 +38,7 @@ struct MissionConfig
   int TEST_WAIT_BEFORE_START_MS = 30000; // how long to wait after receiving the start command before starting to publish telemetry data, this is to allow the system to stabilize after excitation starts
   // test procedure settings
   int TEST_DURATION_OVERRIDE_MS = 60000; // how long each test should run if the tolerance is not met during the test.
-  int TEST_TOLERANCE_RAD = 0.03;         // this indicate difference of theta(t+dt) - theta(t). Once this difference is less or equal to the tolerance value the test is considered to be completed status STOPPED.
+  double TEST_TOLERANCE_DPS = 0.03;         // this indicate difference of theta(t+dt) - theta(t). Once this difference is less or equal to the tolerance value the test is considered to be completed status STOPPED rad/s.
   EXCITATION_AXIS exciteAxis = X_AXIS;   // this indicate the axis to excite during the test procedure, default is X axis
 };
 
@@ -88,7 +88,7 @@ void onCommand(const String &topic, const String &payload)
   {
     missionConf.TEST_DURATION_OVERRIDE_MS = 60000; // default value
     missionConf.TEST_WAIT_BEFORE_START_MS = 30000; // default value
-    missionConf.TEST_TOLERANCE_RAD = 0.03;         // default value
+    missionConf.TEST_TOLERANCE_DPS = 0.03;         // default value
     missionConf.exciteAxis = X_AXIS;               // default value
     for (int i = 0; i < cmd.arg_count; i++)
     {
@@ -101,7 +101,7 @@ void onCommand(const String &topic, const String &payload)
         }
         else if (String(arg.key) == "tolerance")
         {
-          missionConf.TEST_TOLERANCE_RAD = atof(arg.value);
+          missionConf.TEST_TOLERANCE_DPS = atof(arg.value);
         }
         else if (String(arg.key) == "exciteaxis")
         {
@@ -110,15 +110,17 @@ void onCommand(const String &topic, const String &payload)
           {
             missionConf.exciteAxis = static_cast<EXCITATION_AXIS>(axis);
           }
+        } else if (String(arg.key) == "buffer_time"){
+          missionConf.TEST_WAIT_BEFORE_START_MS = atoi(arg.value);
         }
       }
     }
-    bridge.publishStatus("Starting test with duration=" + String(missionConf.TEST_DURATION_OVERRIDE_MS) + "ms, tolerance=" + String(missionConf.TEST_TOLERANCE_RAD) + "rad, exciteAxis=" + String(missionConf.exciteAxis) + "WAITING " + String(missionConf.TEST_WAIT_BEFORE_START_MS) + "ms before starting to publish telemetry data");
+    bridge.publishStatus("Starting test with duration=" + String(missionConf.TEST_DURATION_OVERRIDE_MS) + "ms, tolerance=" + String(missionConf.TEST_TOLERANCE_DPS) + "dps, exciteAxis=" + String(missionConf.exciteAxis) + "WAITING " + String(missionConf.TEST_WAIT_BEFORE_START_MS) + "ms before starting to publish telemetry data");
     delay(missionConf.TEST_WAIT_BEFORE_START_MS); // wait before starting the test to allow the system to stabilize after excitation starts
     mission_status = STARTED;
     missionStartTime = millis();
     bridge.publishStatus("STARTED");
-    bridge.publishEvent("test_started", "duration=" + String(missionConf.TEST_DURATION_OVERRIDE_MS) + ";tolerance=" + String(missionConf.TEST_TOLERANCE_RAD) + ";exciteAxis=" + String(missionConf.exciteAxis));
+    bridge.publishEvent("test_started", "duration=" + String(missionConf.TEST_DURATION_OVERRIDE_MS) + ";tolerance=" + String(missionConf.TEST_TOLERANCE_DPS) + ";exciteAxis=" + String(missionConf.exciteAxis));
   }
   else if (String(cmd.command) == "stoptest")
   {
@@ -394,12 +396,12 @@ void setupBridge()
   bridge.setLogStream(SerialBT, true);
   bridge.setCommandCallback(onCommand);
   bridge.setLogCallback([](const String &message)
-                        {
-                          // timestamp for log message
-                          unsigned long timestamp = millis();
-                          String logMessage = "[LOG at:" + String(timestamp) + " ms] " + message;
-                          Serial.println(logMessage); // USB Serial Monitor output
-                        });
+    {
+      // timestamp for log message
+      unsigned long timestamp = millis();
+      String logMessage = "[LOG at:" + String(timestamp) + " ms] " + message;
+      Serial.println(logMessage); // USB Serial Monitor output
+    });
 }
 
 StaticJsonDocument<512> serializeDataToJson(bno055_burst_t &data, char *buffer, size_t bufferSize)
@@ -528,7 +530,7 @@ void loop()
       {
         deltaTheta = abs(data.euler.getZ() - lastTheta);
       }
-      if (deltaTheta <= missionConf.TEST_TOLERANCE_RAD)
+      if (deltaTheta <= missionConf.TEST_TOLERANCE_DPS)
       {
         mission_status = STOPPED;
         bridge.publishStatus("Test completed, stopping test...");
