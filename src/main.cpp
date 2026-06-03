@@ -486,6 +486,7 @@ void setup()
   // TODO: record offset for calibration, maybe add a command to trigger calibration and store the offset values in non-volatile storage
   imu.begin();
   imu.setOperationMode(IMU_MODE);
+  delay(500); // small delay to ensure imu is ready after mode change
   // Print setup info
   Serial.println("\n========= SETUP INFO =========\n");
   Serial.println("WiFi IP: " + WiFi.localIP().toString());
